@@ -1,0 +1,4 @@
+docker run -it --rm -v "D:\BE SEM 2\LP5":/workspace openmp-env
+
+g++ -fopenmp -o sample sample.cpp
+./sample
