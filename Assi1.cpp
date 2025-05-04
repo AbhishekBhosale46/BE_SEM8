@@ -45,6 +45,33 @@ class Graph{
         }
     }
 
+    void bfsPar(int start){
+        vector<bool> visited(this->size, false);
+        queue<int> q;
+        q.push(start);
+        visited[start] = true;
+        while(!q.empty()){
+            int currNode = q.front();
+            q.pop();
+            cout<<currNode<<endl;
+            #pragma omp parallel for
+            for(int i=0; i<adjList[currNode].size(); i++){
+                bool check_visited;
+                #pragma omp critical
+                {
+                    check_visited = visited[adjList[currNode][i]];
+                }
+                if(!check_visited){
+                    #pragma omp critical
+                    {
+                    q.push(adjList[currNode][i]);
+                    visited[adjList[currNode][i]] = true;
+                    }
+                }
+            }
+        }
+    }
+
     void dfs(int start){
         vector<bool> visited(this->size, false);
         dfsUtil(start, visited);
@@ -60,6 +87,38 @@ class Graph{
         }
     }
 
+    vector<int> dfs_parallel(int start_vertex){
+        vector<int> dfs_traversal;
+        map<int, bool> is_visited;
+        stack<int> st;
+        st.push(start_vertex);
+        while (!st.empty()){
+            int top = st.top();
+            st.pop();
+            if (!is_visited[top]){
+                dfs_traversal.push_back(top);
+                is_visited[top] = true;
+                vector<int> adj_elements = adjList[top];
+                int l = adj_elements.size();
+                #pragma omp parallel for
+                for (int i = 0; i < l; i++){
+                    bool check_visited ; 
+                    #pragma omp critical 
+                    {
+                        check_visited = is_visited[adj_elements[i]];
+                    }
+                    if (!check_visited){
+                        #pragma omp critical 
+                        {
+                            st.push(adj_elements[i]);
+                        }
+                    }
+                }
+            }
+        }
+        return dfs_traversal;
+    }
+
 };
 
 int main(){
@@ -70,6 +129,7 @@ int main(){
     g.addEdge(1, 3);
     g.addEdge(2, 5);
     g.bfs(0);
+    g.bfsPar(0);
     cout<<endl;
     g.dfs(0);
     return 0;
